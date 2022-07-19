@@ -52,7 +52,15 @@ class TestUserDelete(BaseCase):
             )
 
         Assertions.assert_code_status(delete_response, 400)
-        assert delete_response.text == "Please, do not delete test users with ID 1, 2, 3, 4 or 5."
+        assert delete_response.text == "Please, do not delete test users with ID 1, 2, 3, 4 or 5.", \
+            f'The user has been deleted! Content = {delete_response.content}'
+
+        response = MyRequests.get(
+            f'/user/2',
+            headers={"x-csrf-token": token},
+            cookies={"auth_sid": auth_sid},
+        )
+        Assertions.assert_code_status(response, 200)
 
     @allure.description("This test try to create and delete user")
     @allure.severity(allure.severity_level.CRITICAL)
@@ -93,7 +101,7 @@ class TestUserDelete(BaseCase):
             )
 
         Assertions.assert_code_status(register_response, 200)
-        assert get_response.text == "User not found"
+        assert get_response.text == "User not found", f"The user has been deleted! Content = {get_response.content}"
 
     @allure.description("This test try to delete user by other user")
     @allure.severity(allure.severity_level.CRITICAL)
@@ -132,3 +140,11 @@ class TestUserDelete(BaseCase):
         Assertions.assert_code_status(delete_response, 200)
         assert delete_response.text == ""
 
+        response = MyRequests.get(
+            f'/user/2',
+            headers={"x-csrf-token": self.token},
+            cookies={"auth_sid": self.auth_sid},
+        )
+
+        Assertions.assert_code_status(response, 200)
+        assert response.json()["username"] == 'Vitaliy', f"The user has been deleted! Content = {response.content}"
